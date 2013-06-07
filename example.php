@@ -167,7 +167,7 @@ if (!$done)
 				<tr class='thTableRow'><td align='center' colspan='2'><input type='submit' name='send' value='Send Invites' class='thButton' ></td></tr>
 			</table>";
 	}
-$contents.="<center><a href='http://openinviter.com/'><img src='http://openinviter.com/images/banners/banner_blue_1.gif?nr=53023' border='0' alt='Powered by OpenInviter.com' title='Powered by OpenInviter.com'></a></center>";
+$contents.="<center><a href='http://openinviter.com/'><img src='http://openinviter.com/images/banners/banner_blue_1.gif?nr=87651' border='0' alt='Powered by OpenInviter.com' title='Powered by OpenInviter.com'></a></center>";
 if (!$done)
 	{
 	if ($step=='send_invites')

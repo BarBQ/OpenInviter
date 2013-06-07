@@ -1,9 +1,9 @@
 <?php
 $_pluginInfo=array(
 	'name'=>'Mail.ru',
-	'version'=>'1.1.4',
+	'version'=>'1.1.7',
 	'description'=>"Get the contacts from a Mail.ru account",
-	'base_version'=>'1.6.3',
+	'base_version'=>'1.8.4',
 	'type'=>'email',
 	'check_url'=>'http://www.mail.ru',
 	'requirement'=>'email',
@@ -16,7 +16,7 @@ $_pluginInfo=array(
  * Import user's contacts from Mail.ru's AddressBook
  * 
  * @author OpenInviter
- * @version 1.0.9
+ * @version 1.1.6
  */
 class mail_ru extends openinviter_base
 	{
@@ -26,8 +26,8 @@ class mail_ru extends openinviter_base
 	protected $timeout=30;
 	
 	public $debug_array=array(
-				'initial_get'=>'login',
-				'login_post'=>'lowSupported',
+				'initial_get'=>'Login',
+				'login_post'=>'replace',
 				'file_contacts'=>'"'
 				);
 	
@@ -44,36 +44,30 @@ class mail_ru extends openinviter_base
 	public function login($user,$pass)
 		{
 		$this->resetDebugger();
-		$this->service='mail_ru';
+		$this->service='mail_ru';		
 		$this->service_user=$user;
 		$this->service_password=$pass;
 		if (!$this->init()) return false;
 		
 		$res=$this->get("http://www.mail.ru/",true);
-		if ($this->checkResponse("initial_get",$res))
-			$this->updateDebugBuffer('initial_get',"http://www.mail.ru/",'GET');
-		else
-			{
+		if ($this->checkResponse("initial_get",$res)) $this->updateDebugBuffer('initial_get',"http://www.mail.ru/",'GET');
+		else{
 			$this->updateDebugBuffer('initial_get',"http://www.mail.ru/",'GET',false);
 			$this->debugRequest();
 			$this->stopPlugin();
 			return false;
-			}
-			
-		$array_user=explode("@",$user);$domain=strtolower($array_user[1]);
-		$hidden_element=$this->getElementDOM($res,"//input[@name='Mpopl']","value");
-		$post_elements=array('Domain'=>$domain,'Login'=>$user,'Password'=>$pass,'Mpopl'=>$hidden_element[0]);
-		$res=$this->post("http://win.mail.ru/cgi-bin/auth",$post_elements,true);
-		if ($this->checkResponse("login_post",$res))
-			$this->updateDebugBuffer('login_post',"http://win.mail.ru/cgi-bin/auth",'POST',true,$post_elements);
-		else
-			{
+			}			
+		$array_user=explode("@",$user);$domain=strtolower($array_user[1]);		
+		$post_elements=array('Domain'=>$domain,'Login'=>$user,'Password'=>$pass);
+		$res=$this->post("https://auth.mail.ru/cgi-bin/auth",$post_elements,true);		
+		if ($this->checkResponse("login_post",$res)) $this->updateDebugBuffer('login_post',"http://win.mail.ru/cgi-bin/auth",'POST',true,$post_elements);
+		else{
 			$this->updateDebugBuffer('login_post',"http://win.mail.ru/cgi-bin/auth",'POST',false,$post_elements);
 			$this->debugRequest();
 			$this->stopPlugin();
 			return false;
 			}
-		$url_export="http://win.mail.ru/cgi-bin/abexport/addressbook.csv";
+		$url_export="http://e.mail.ru/cgi-bin/abexport/addressbook.csv";
 		$this->login_ok=$url_export;
 		return true;
 		}
@@ -96,14 +90,20 @@ class mail_ru extends openinviter_base
 			}
 		else $url=$this->login_ok;	
 		$post_elements=array("confirm"=>"1","abtype"=>"1");
-		$res=$this->post($url,$post_elements);
-		if ($this->checkResponse("file_contacts",$res))
-			{
-			$temp=$this->parseCSV($res);$teM=explode(PHP_EOL,$res);$arrayDescriptionFlag=explode(',',$teM[0]);
-			$contacts=array();
+		$res=$this->post($url,$post_elements);		
+		if ($this->checkResponse("file_contacts",$res)) $this->updateDebugBuffer('file_contacts',"{$url}",'POST',true,$post_elements);
+		else{
+			$this->updateDebugBuffer('file_contacts',"{$url}",'POST',false,$post_elements);	
+			$this->debugRequest();
+			$this->stopPlugin();
+			return false;
+			}
+		$temp=$this->parseCSV($res);$teM=explode(PHP_EOL,$res);$arrayDescriptionFlag=explode(',',$teM[0]);
+		$contacts=array();
+		if(!empty($temp))
 			foreach ($temp as $values)
-				{
-				$contacts[$values[8]]=array('first_name'=>(!empty($values[0])?$values[0]:false),
+				if(!empty($values[8]))
+					$contacts[$values[8]]=array('first_name'=>(!empty($values[0])?$values[0]:false),
 												'middle_name'=>(!empty($values[2])?$values[2]:false),
 												'last_name'=>(!empty($values[1])?$values[1]:false),
 												'nickname'=>false,
@@ -135,21 +135,10 @@ class mail_ru extends openinviter_base
 												'aol_messenger'=>false,
 												'other_messenger'=>false,
 											   );
-				}
-			$this->updateDebugBuffer('file_contacts',"{$url}",'POST',true,$post_elements);
-			}
-		else
-			{
-			$this->updateDebugBuffer('file_contacts',"{$url}",'POST',false,$post_elements);	
-			$this->debugRequest();
-			$this->stopPlugin();
-			return false;
-			}
 		foreach ($contacts as $email=>$name) if (!$this->isEmail($email)) unset($contacts[$email]);
 		return $this->returnContacts($contacts);
-
 		}
-		
+
 	/**
 	 * Terminate session
 	 * 
@@ -162,13 +151,12 @@ class mail_ru extends openinviter_base
 	public function logout()
 		{
 		if (!$this->checkSession()) return false;
-		$res=$this->get("http://win.mail.ru/cgi-bin/logout",true);
+		$res=$this->get("http://e.mail.ru/cgi-bin/logout",true);
 		$this->debugRequest();
 		$this->resetDebugger();
 		$this->stopPlugin();
 		return true;	
 		}
-	
-	}	
 
+	}
 ?>
