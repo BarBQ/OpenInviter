@@ -1,9 +1,9 @@
 <?php
 $_pluginInfo = array(
 	'name'             =>'O2',
-	'version'          => '1.0.2',
+	'version'          => '1.1.0',
 	'description'      => "Get the contacts from a O2 account",
-	'base_version'     => '1.6.9',
+	'base_version'     => '1.9.6',
 	'type'             => 'email',
 	'check_url'        => 'http://poczta.o2.pl/',
 	'requirement'      => 'user',
@@ -42,8 +42,8 @@ $_pluginInfo = array(
  * 
  * Imports user's contacts from O2's AddressBook
  * 
- * @author OpenInviter
- * @version 1.0.0
+ * @author BarBQ
+ * @version 1.1.0
  */
 class o2 extends openinviter_base
 {
@@ -82,17 +82,6 @@ class o2 extends openinviter_base
       return false;
     }
 		
-		$res = $this->get("http://poczta.o2.pl/");
-
-		if ($this->checkResponse('initial_get',$res)) {
-      $this->updateDebugBuffer('initial_get',"http://poczta.o2.pl/", 'GET');
-    }	else {
-			$this->updateDebugBuffer('initial_get',"http://poczta.o2.pl/",'GET',false);
-			$this->debugRequest();
-			$this->stopPlugin();
-			return false;	
-		}
-		
 		$form_action   = "https://poczta.o2.pl/login.html";
 		$post_elements = array(
       'username' => $user,
@@ -115,8 +104,7 @@ class o2 extends openinviter_base
 		}
 
 		$sesid          = $this->getElementString($res,'ssid=',";");
-		$url_export     = "http://poczta.o2.pl/a?cmd=export_addressbook&requestid=2&xsfr-cookie={$sesid}&fmt=xml&upid=&";
-		$this->login_ok = $url_export;
+    $this->login_ok = "http://poczta.o2.pl/a?cmd=export_addressbook&requestid=2&xsfr-cookie={$sesid}&fmt=xml&upid=&";
 
 		return true;
 	}
